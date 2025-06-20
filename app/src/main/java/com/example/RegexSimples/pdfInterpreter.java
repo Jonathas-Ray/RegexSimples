@@ -7,6 +7,8 @@ import android.util.Log;
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.text.PDFTextStripper;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import java.io.InputStream;
 
@@ -32,8 +34,14 @@ public class pdfInterpreter {
         }
     }
 
-    public static String [] pdf_splitter(String extracted_pdf){
-        String[] tokens = extracted_pdf.split("\\s+");  // Quebra por espaços e quebras de linha
-        return tokens;
+    public static Map<Integer, String> pdf_splitter(String extracted_pdf) {
+        Map<Integer, String> resultado = new LinkedHashMap<>();
+        String[] tokens = extracted_pdf.split("\\s+");
+
+        for (int i = 0; i < tokens.length; i++) {
+            resultado.put(i, tokens[i]);
+        }
+
+        return resultado;
     }
 }

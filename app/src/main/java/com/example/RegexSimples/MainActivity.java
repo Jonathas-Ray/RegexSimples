@@ -13,6 +13,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import java.util.Map;
+
 public class MainActivity extends AppCompatActivity {
     private TextView texto;
     private ActivityResultLauncher<Intent> pickPdfLauncher;
@@ -22,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.mainlayout), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
@@ -33,8 +35,18 @@ public class MainActivity extends AppCompatActivity {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         Uri pdfUri = result.getData().getData();
                         String resultado = pdfInterpreter.pdfExtraction(this, pdfUri);
-                        String [] resultados = pdfInterpreter.pdf_splitter(resultado);
-                        texto.setText(String.join(" ", resultados));
+                        Map<Integer, String> resultados = pdfInterpreter.pdf_splitter(resultado);
+
+                        StringBuilder resultadoFinal = new StringBuilder();
+                        for (Map.Entry<Integer, String> entry : resultados.entrySet()) {
+                            resultadoFinal.append("Posição ")
+                                    .append(entry.getKey())
+                                    .append(": ")
+                                    .append(entry.getValue())
+                                    .append("\n");
+                        }
+
+                        texto.setText(resultadoFinal.toString());
                     }
                 }
         );
