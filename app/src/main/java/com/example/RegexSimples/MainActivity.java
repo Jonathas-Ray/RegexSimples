@@ -17,19 +17,32 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     private TextView texto;
-    private ActivityResultLauncher<Intent> pickPdfLauncher;
+    private ActivityResultLauncher<Intent> pickPdfSplitter;
+    private ActivityResultLauncher<Intent> pickPdfString;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+        texto = findViewById(R.id.resultado);
+
+        // Restaura o conteúdo do TextView se houver
+        if (savedInstanceState != null) {
+            String textoSalvo = savedInstanceState.getString("resultado_texto");
+            if (textoSalvo != null) {
+                texto.setText(textoSalvo);
+            }
+        }
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.mainlayout), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        pickPdfLauncher = registerForActivityResult(
+
+        pickPdfSplitter = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
@@ -50,14 +63,40 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
         );
-        findViewById(R.id.Enviar_PDF).setOnClickListener(v -> lerPDF());
-        texto = findViewById(R.id.resultado);
+
+        pickPdfString = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Uri pdfUri = result.getData().getData();
+                        String resultado = pdfInterpreter.pdfExtraction(this, pdfUri);
+                        texto.setText(resultado);
+                    }
+                }
+        );
+
+        findViewById(R.id.Listar_PDF).setOnClickListener(v -> lerPDF());
+        findViewById(R.id.PDF_String).setOnClickListener(v -> lerPDFString());
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // Salva o conteúdo atual do TextView
+        outState.putString("resultado_texto", texto.getText().toString());
     }
 
     public void lerPDF() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("application/pdf");
-        pickPdfLauncher.launch(intent);
+        pickPdfSplitter.launch(intent);
+    }
+
+    public void lerPDFString() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/pdf");
+        pickPdfString.launch(intent);
     }
 }
