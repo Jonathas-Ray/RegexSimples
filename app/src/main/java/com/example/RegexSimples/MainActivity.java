@@ -13,12 +13,14 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     private TextView texto;
     private ActivityResultLauncher<Intent> pickPdfSplitter;
-    private ActivityResultLauncher<Intent> pickPdfString;
+    private ArrayList<String> exame = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,8 +30,7 @@ public class MainActivity extends AppCompatActivity {
 
         texto = findViewById(R.id.resultado);
 
-        // Restaura o conteúdo do TextView se houver
-        if (savedInstanceState != null) {
+        if (savedInstanceState != null) { // Mantém o texto quando virar a tela
             String textoSalvo = savedInstanceState.getString("resultado_texto");
             if (textoSalvo != null) {
                 texto.setText(textoSalvo);
@@ -50,8 +51,10 @@ public class MainActivity extends AppCompatActivity {
                         String resultado = pdfInterpreter.pdfExtraction(this, pdfUri);
                         Map<Integer, String> resultados = pdfInterpreter.pdf_splitter(resultado);
 
+                        exame.clear();
                         StringBuilder resultadoFinal = new StringBuilder();
                         for (Map.Entry<Integer, String> entry : resultados.entrySet()) {
+                            exame.add(entry.getValue());
                             resultadoFinal.append("Posição ")
                                     .append(entry.getKey())
                                     .append(": ")
@@ -64,25 +67,13 @@ public class MainActivity extends AppCompatActivity {
                 }
         );
 
-        pickPdfString = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        Uri pdfUri = result.getData().getData();
-                        String resultado = pdfInterpreter.pdfExtraction(this, pdfUri);
-                        texto.setText(resultado);
-                    }
-                }
-        );
-
         findViewById(R.id.Listar_PDF).setOnClickListener(v -> lerPDF());
-        findViewById(R.id.PDF_String).setOnClickListener(v -> lerPDFString());
+        findViewById(R.id.ExtractButton).setOnClickListener(v -> callExtract());
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(Bundle outState) { //Efetivamente salva o texto quando eu o coleto
         super.onSaveInstanceState(outState);
-        // Salva o conteúdo atual do TextView
         outState.putString("resultado_texto", texto.getText().toString());
     }
 
@@ -93,10 +84,14 @@ public class MainActivity extends AppCompatActivity {
         pickPdfSplitter.launch(intent);
     }
 
-    public void lerPDFString() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("application/pdf");
-        pickPdfString.launch(intent);
+    public void callExtract() {
+        Extract extractor = new Extract();
+        String[] palavras = exame.toArray(new String[0]); // conversão do ArrayList para vetor
+        List<ResultadoExame> exames = extractor.extrairExames(palavras);
+        StringBuilder resultadoTexto = new StringBuilder();
+        for (ResultadoExame exame : exames) {
+            resultadoTexto.append(exame.toString()).append("\n");
+        }
+        texto.setText(resultadoTexto.toString());
     }
 }
