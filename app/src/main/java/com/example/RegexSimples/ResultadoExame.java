@@ -10,7 +10,12 @@ public class ResultadoExame {
 
     @Override
     public String toString() {
-        return nome + ": " + valorAtual + " " + unidadeAtual +
-                " | Ref: " + valorRefMin + " a " + valorRefMax + " " + unidadeReferencia;
+        StringBuilder sb = new StringBuilder();
+        sb.append(nome).append(": ").append(valorAtual).append(" ").append(unidadeAtual);
+
+        if (valorRefMin != null && valorRefMax != null && unidadeReferencia != null) {
+            sb.append(" (Ref: ").append(valorRefMin).append(" - ").append(valorRefMax).append(" ").append(unidadeReferencia).append(")");
+        }
+        return sb.toString();
     }
 }

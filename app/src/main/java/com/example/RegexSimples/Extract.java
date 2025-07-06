@@ -7,54 +7,68 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Extract {
-    private List<String> tiposDeExame = new ArrayList<>(List.of("Neutrófilo:", "Linfócito:", "Monócito:", "Eosinófilo:", "Basófilo:",
-            "Hemácias:", "Hemoglobina:", "Hematócrito:", "VCM:", "HCM:", "CHCM:", "RDW:")); // Ajustável
+    private List<String> examTypes = new ArrayList<>(List.of(
+            "Neutrófilo", "Linfócito", "Monócito", "Eosinófilo", "Basófilo",
+            "Hemácias", "Hemoglobina", "Hematócrito", "VCM", "HCM", "CHCM", "RDW",
+            "Plaquetas", "MPV", "Leucograma"
+    ));
 
-    public List<ResultadoExame> extrairExames(String[] palavras) { //Posso "exibir" no TextView
-        List<ResultadoExame> resultados = new ArrayList<>();
+    public List<ResultadoExame> extrairExames(String[] words) {
+        List<ResultadoExame> results = new ArrayList<>();
 
-        String termosPattern = tiposDeExame.stream()
+        String patternTerms = examTypes.stream()
+                // O Stream é chamado para estabelecer uma sequência de atos (aqui 2.map e 1.collect)
                 .map(Pattern::quote)
+                // Acima especifica que haverão termos que evem ser considerados de maneira literal e não seus respectivos significados para o sistema Regex
+                .map(s -> "(?<![\\w-])" + s + "(?=(?:\\s*[:\\-–—\\.]+\\s*)?(?![a-zA-Z]))")
+                // Acima, "vê ao redor da palavra" para garantir que não haja nada antes da palavra ou depois evitando falsos positivos
                 .collect(Collectors.joining("|"));
+                // Reune tudo via |
 
-        Pattern examePattern = Pattern.compile(termosPattern, Pattern.CASE_INSENSITIVE);
-        Pattern resultadoPattern = Pattern.compile("(\\d+[.,]?\\d*)\\s*(%|fL|g/dL|pg|/µL|10\\^6/µL)?");
-        Pattern referenciaPattern = Pattern.compile("(\\d+[.,]?\\d*)\\s*[a-–]\\s*(\\d+[.,]?\\d*)\\s*(%|fL|g/dL|pg|/µL|10\\^6/µL)");
+        Pattern examPattern = Pattern.compile(patternTerms, Pattern.CASE_INSENSITIVE);
+        // Compila os nomes dos exames adicionando "case insenstive" para evitar falsos negativos por causa de maiúsculos/minúsculos
+        Pattern resultPattern = Pattern.compile("(\\d+[.,]?\\d*)\\s*(%|fL|g/dL|pg|/µL|10\\^6/µL)?");
+        // Na linha acima o porquê do quote ser necessário
+        Pattern referencePattern = Pattern.compile("(\\d+[.,]?\\d*)\\s*(?:a|à|até|–|-)\\s*(\\d+[.,]?\\d*)\\s*(%|fL|g/dL|pg|/µL|10\\^6/µL)");
 
-        for (int i = 0; i < palavras.length; i++) { //De um em um encontra o nome do exame
-            Matcher mExame = examePattern.matcher(palavras[i]);
-            if (mExame.matches()) {
-                ResultadoExame res = new ResultadoExame();
-                res.nome = palavras[i];
+        for (int i = 0; i < words.length; i++) {
+            Matcher examMatcher = examPattern.matcher(words[i].replace(":", ""));
+            if (examMatcher.find()) {
+                ResultadoExame result = new ResultadoExame();
+                result.nome = words[i].replace(":", "");
 
-                StringBuilder contexto = new StringBuilder();
-                int j = i + 1; //Necessário para pularmos o índice mais tarde
-                for (; j < palavras.length; j++) { //Itera mais um pouco até achar o proximo exame
-                    Matcher proximoExame = examePattern.matcher(palavras[j]);
-                    if (proximoExame.matches()) {
-                        break; // chegou no próximo exame, para de coletar
+                StringBuilder context = new StringBuilder();
+                int j = i + 1;
+                for (; j < words.length; j++) {
+                    Matcher nextExam = examPattern.matcher(words[j].replace(":", ""));
+                    if (nextExam.find()) {
+                        break;
                     }
-                    contexto.append(palavras[j]).append(" "); //forma um retalho String para o fazer o Match
-                }
-                String contextoStr = contexto.toString();
+                    context.append(words[j]).append(" ");
+                } // Até esse ponto ele só encontra os dois próximos exames para especificar o trecho onde procurar os resultados
 
-                Matcher mRes = resultadoPattern.matcher(contextoStr); //Matcher para bloco dos resultados
-                if (mRes.find()) {
-                    res.valorAtual = mRes.group(1);
-                    res.unidadeAtual = mRes.group(2) != null ? mRes.group(2) : "";
-                }
+                String contextStr = context.toString();
 
-                Matcher mRef = referenciaPattern.matcher(contextoStr); //Matcher para bloco das referências
-                if (mRef.find()) {
-                    res.valorRefMin = mRef.group(1);
-                    res.valorRefMax = mRef.group(2);
-                    res.unidadeReferencia = mRef.group(3);
+                Matcher resultMatcher = resultPattern.matcher(contextStr);
+                if (resultMatcher.find()) {
+                    result.valorAtual = resultMatcher.group(1);
+                    result.unidadeAtual = resultMatcher.group(2) != null ? resultMatcher.group(2) : "";
                 }
 
-                resultados.add(res);
-                i = j - 1; // pula direto pro índice anterior ao próximo exame
+                Matcher referenceMatcher = referencePattern.matcher(contextStr);
+                if (referenceMatcher.find()) {
+                    result.valorRefMin = referenceMatcher.group(1);
+                    result.valorRefMax = referenceMatcher.group(2);
+                    result.unidadeReferencia = referenceMatcher.group(3);
+                } // OS DOIS "IF" ACIMA NÃO SÃO CAPAZES DE LIDAR COM EXAMES COM MAIS DE UM RESULTADO
+                 //  ALÉM DE QUEBRAR CASO NÃO SE IDENTIFIQUE UM EXAME E ELE ACABE DENTRO DO CONTEXTSTR
+                //   PREFERÍVEL CONTAR UNIDADES DE MEDIDA DISTINTAS COMO REDUNDÂNCIA
+
+                results.add(result);
+                i = j - 1;
             }
         }
-        return resultados;
+
+        return results;
     }
 }
