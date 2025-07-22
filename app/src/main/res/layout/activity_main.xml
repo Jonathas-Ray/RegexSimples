@@ -53,18 +53,47 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <Button
-            android:id="@+id/ExtractButton"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/OCR"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Extrair Dados" />
+            android:text="OCR"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@color/purple_500"
+            app:cornerRadius="50dp"
+            android:layout_marginEnd="8dp"
+            android:insetLeft="24dp"
+            android:insetRight="24dp"
+            android:insetTop="8dp"
+            android:insetBottom="8dp" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/Listar_PDF"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="Abrir PDF" />
+            android:text="PDF"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@color/purple_500"
+            app:cornerRadius="50dp"
+            android:layout_marginEnd="8dp"
+            android:insetLeft="24dp"
+            android:insetRight="24dp"
+            android:insetTop="8dp"
+            android:insetBottom="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/ExtractButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Extrair"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@color/purple_500"
+            app:cornerRadius="50dp"
+            android:insetLeft="12dp"
+            android:insetRight="12dp"
+            android:insetTop="8dp"
+            android:insetBottom="8dp"
+            android:singleLine="true" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
